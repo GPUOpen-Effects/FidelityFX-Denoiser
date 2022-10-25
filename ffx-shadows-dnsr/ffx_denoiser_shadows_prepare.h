@@ -31,6 +31,11 @@ void FFX_DNSR_Shadows_CopyResult(uint2 gtid, uint2 gid)
     const uint linear_tile_index = FFX_DNSR_Shadows_LinearTileIndex(gid, FFX_DNSR_Shadows_GetBufferDimensions().x);
     const bool hit_light = FFX_DNSR_Shadows_HitsLight(did, gtid, gid);
     const uint lane_mask = hit_light ? FFX_DNSR_Shadows_GetBitMaskFromPixelPosition(did) : 0;
+    
+    //adding a memory barrier before WaveActiveBitOr for GPUs that can have wave lanes size < 32
+    if (WaveGetLaneCount() < 32)
+        GroupMemoryBarrierWithGroupSync();
+    
     FFX_DNSR_Shadows_WriteMask(linear_tile_index, WaveActiveBitOr(lane_mask));
 }
  
